@@ -1,0 +1,332 @@
+openapi: 3.0.3
+info:
+  title: API Sabor Digital
+  version: 1.0.0
+  description: Contrato OpenAPI para a API de gerenciamento de produtos e uploads do sistema Sabor Digital.
+servers:
+  - url: http://localhost:4000
+    description: Ambiente local de desenvolvimento
+paths:
+  /:
+    get:
+      summary: Informações da API
+      tags:
+        - Sistema
+      responses:
+        '200':
+          description: Dados básicos da API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mensagem:
+                    type: string
+                    example: API SABOR DIGITAL
+                  versao:
+                    type: string
+                    example: 5.0.8
+
+  /upload:
+    post:
+      summary: Upload de imagem e cadastro de produto
+      tags:
+        - Produtos
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - nome
+                - descricao
+                - preco
+              properties:
+                arquivo:
+                  type: string
+                  format: binary
+                  description: Arquivo de imagem para upload
+                nome:
+                  type: string
+                  example: X-Burger
+                descricao:
+                  type: string
+                  example: Burger com queijo e molho especial
+                preco:
+                  type: number
+                  format: float
+                  example: 29.90
+                categoria:
+                  type: string
+                  nullable: true
+                  example: Lanches
+      responses:
+        '201':
+          description: Produto cadastrado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /upload-multiplo:
+    post:
+      summary: Upload de múltiplos arquivos
+      tags:
+        - Produtos
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                arquivo:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Arquivos enviados com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /produtos:
+    get:
+      summary: Listar produtos
+      tags:
+        - Produtos
+      responses:
+        '200':
+          description: Lista de produtos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Produto'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    post:
+      summary: Cadastrar produto
+      tags:
+        - Produtos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdutoInput'
+      responses:
+        '201':
+          description: Produto criado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /produtos/{id}:
+    get:
+      summary: Buscar produto por ID
+      tags:
+        - Produtos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID do produto
+      responses:
+        '200':
+          description: Produto encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+    put:
+      summary: Atualizar produto
+      tags:
+        - Produtos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProdutoInput'
+      responses:
+        '200':
+          description: Produto atualizado com sucesso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Produto'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Excluir produto
+      tags:
+        - Produtos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Produto deletado com sucesso
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sucesso:
+                    type: boolean
+                    example: true
+                  mensagem:
+                    type: string
+                    example: Produto removido com sucesso
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  schemas:
+    Produto:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nome:
+          type: string
+          example: X-Burger
+        descricao:
+          type: string
+          example: Burger com queijo e molho especial
+        preco:
+          type: number
+          format: float
+          example: 29.90
+        categoria:
+          type: string
+          nullable: true
+          example: Lanches
+        imagem:
+          type: string
+          nullable: true
+          example: uploads/pngFiles/arquivo.png
+
+    ProdutoInput:
+      type: object
+      required:
+        - nome
+        - descricao
+        - preco
+      properties:
+        nome:
+          type: string
+          example: X-Burger
+        descricao:
+          type: string
+          example: Burger com queijo e molho especial
+        preco:
+          type: number
+          format: float
+          example: 29.90
+        categoria:
+          type: string
+          nullable: true
+          example: Lanches
+        imagem:
+          type: string
+          nullable: true
+          example: uploads/pngFiles/arquivo.png
+
+    UploadResponse:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: true
+        mensagem:
+          type: string
+          example: Arquivo enviado com sucesso
+        arquivos:
+          type: array
+          items:
+            type: object
+            properties:
+              fieldname:
+                type: string
+                example: arquivo
+              filename:
+                type: string
+                example: 12345.png
+              path:
+                type: string
+                example: uploads/pngFiles/12345.png
+
+    ErrorResponse:
+      type: object
+      properties:
+        sucesso:
+          type: boolean
+          example: false
+        mensagem:
+          type: string
+          example: Erro interno do servidor
+        erro:
+          type: string
+          nullable: true
+          example: Detalhes do erro
+
+  responses:
+    BadRequest:
+      description: Requisição inválida
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Recurso não encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    InternalServerError:
+      description: Erro interno do servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
